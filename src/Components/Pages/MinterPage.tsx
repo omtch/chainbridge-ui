@@ -3,23 +3,34 @@ import { makeStyles, createStyles, ITheme } from "@chainsafe/common-theme";
 import AboutDrawer from "../../Modules/AboutDrawer";
 import ChangeNetworkDrawer from "../../Modules/ChangeNetworkDrawer";
 import NetworkUnsupportedModal from "../../Modules/NetworkUnsupportedModal";
-import { Button, Typography, SelectInput } from "@chainsafe/common-components";
+import {
+  Button,
+  Typography,
+  QuestionCircleSvg,
+  SelectInput,
+} from "@chainsafe/common-components";
 import { Form, Formik } from "formik";
 import clsx from "clsx";
 import { useWeb3 } from "@chainsafe/web3-context";
 import { useChainbridge } from "../../Contexts/ChainbridgeContext";
-import { chainbridgeConfig } from "../../chainbridgeConfig";
-import { Erc20DetailedFactory } from "../../Contracts/Erc20DetailedFactory";
-import TokenSelectInput from "../Custom/TokenSelectInput";
-import Balance from "../Custom/Balance";
-import { MOONBEAM_CYAN } from "../../Themes/LightTheme";
+import { object, string } from "yup";
+import { ReactComponent as ETHIcon } from "../../media/tokens/eth.svg";
+import { chainbridgeConfig, TokenConfig } from "../../chainbridgeConfig";
+import PreflightModalWrap from "../../Modules/PreflightModalWrap";
+import WrapActiveModal from "../../Modules/WrapActiveModal";
+import { parseUnits } from "ethers/lib/utils";
+import { forwardTo } from "../../Utils/History";
+import { ROUTE_LINKS } from "../Routes";
+import { BigNumber, utils } from "ethers";
+import SimpleTokenInput from "../Custom/SimpleTokenInput";
 
 const useStyles = makeStyles(({ constants, palette }: ITheme) =>
   createStyles({
     root: {
-      padding: `${constants.generalUnit}px ${constants.generalUnit * 6}px`,
+      minHeight: constants.generalUnit * 69,
+      padding: constants.generalUnit * 6,
+      overflow: "hidden",
       position: "relative",
-      width: "100%",
     },
     walletArea: {
       display: "flex",
@@ -27,6 +38,9 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
       alignItems: "center",
       justifyContent: "center",
       width: "100%",
+    },
+    blurb: {
+      color: palette.common.black.main,
     },
     connectButton: {
       margin: `${constants.generalUnit * 3}px 0 ${constants.generalUnit * 6}px`,
@@ -52,6 +66,7 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
       padding: `${constants.generalUnit * 2}px ${
         constants.generalUnit * 1.5
       }px`,
+      border: `1px solid ${palette.additional["gray"][6]}`,
       borderRadius: 2,
       color: palette.additional["gray"][9],
       marginTop: constants.generalUnit,
@@ -95,51 +110,63 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
       borderBottomLeftRadius: 0,
       borderTopLeftRadius: 0,
       left: -1,
-      color: MOONBEAM_CYAN,
-      backgroundColor: "#fff",
-      borderColor: MOONBEAM_CYAN,
+      color: palette.additional["gray"][8],
+      backgroundColor: palette.additional["gray"][3],
+      borderColor: palette.additional["gray"][6],
       "&:hover": {
-        backgroundColor: MOONBEAM_CYAN,
-        color: "#fff",
+        borderColor: palette.additional["gray"][6],
+        backgroundColor: palette.additional["gray"][7],
+        color: palette.common.white.main,
       },
       "&:focus": {
         borderColor: palette.additional["gray"][6],
       },
     },
-    currencySelector: {
-      width: "45%",
+    tokenIndicator: {
+      width: 120,
+      textAlign: "right",
+      "& p": {
+        marginBottom: constants.generalUnit,
+      },
       "& *": {
         cursor: "pointer",
       },
-    },
-    token: {},
-    address: {
-      margin: 0,
-      marginBottom: constants.generalUnit * 3,
     },
     generalInput: {
       "& > span": {
         marginBottom: constants.generalUnit,
       },
     },
-    moreInfo: {
+    faqButton: {
+      cursor: "pointer",
+      height: 20,
+      width: 20,
+      marginTop: constants.generalUnit * 5,
+      fill: `${palette.additional["transferUi"][1]} !important`,
+    },
+    token: {
+      backgroundColor: palette.additional["gray"][1],
+      borderRadius: 2,
+      border: `1px solid ${palette.additional["gray"][6]}`,
+      padding: `${constants.generalUnit * 1}px ${
+        constants.generalUnit * 1.5
+      }px`,
       display: "flex",
+      flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginTop: constants.generalUnit * 5,
-      marginBottom: constants.generalUnit * 2,
-      "& > i": {
-        color: `${MOONBEAM_CYAN} !important`,
-        cursor: "pointer",
+      cursor: "pointer",
+      height: constants.generalUnit * 4,
+      "& img, & svg": {
+        display: "block",
+        height: 14,
+        width: 14,
+        marginLeft: 10,
       },
-    },
-    moonbeamLinks: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignContent: "baseline",
-      "& > a": {
-        marginLeft: "10px",
-        color: MOONBEAM_CYAN,
+      "& span": {
+        minWidth: `calc(100% - 30px)`,
+        textAlign: "right",
+        color: palette.additional["gray"][9],
       },
     },
     tokenItem: {
@@ -159,70 +186,52 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
         textAlign: "right",
       },
     },
-    fees: {
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      justifyContent: "space-between",
-      marginBottom: constants.generalUnit,
-      "& > *": {
-        display: "block",
-        width: "50%",
-        color: palette.additional["gray"][8],
-        marginBottom: constants.generalUnit / 2,
-        "&:nth-child(even)": {
-          textAlign: "right",
-        },
-      },
-    },
-    transferButtonSection: {
-      display: "flex",
-      justifyContent: "center",
-    },
-    balanceSection: {
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-    },
+    submitButtonArea: {},
   })
 );
 
 type PreflightDetails = {
   tokenAmount: number;
-  token: string;
-  tokenSymbol: string;
-  receiver: string;
 };
 
-const MinterPage = () => {
+const MainPage = () => {
   const classes = useStyles();
   const {
     isReady,
     checkIsReady,
     wallet,
-    address,
     onboard,
     tokens,
-    provider,
+    ethBalance,
     network,
+    address,
+    gasPrice,
   } = useWeb3();
   const {
     homeChain,
-    destinationChains,
-    destinationChain,
-    setDestinationChain,
+    wrapTokenConfig,
+    wrapToken,
+    unwrapToken,
   } = useChainbridge();
-
   const [aboutOpen, setAboutOpen] = useState<boolean>(false);
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [changeNetworkOpen, setChangeNetworkOpen] = useState<boolean>(false);
-
+  const [preflightModalOpen, setPreflightModalOpen] = useState<boolean>(false);
   const [preflightDetails, setPreflightDetails] = useState<PreflightDetails>({
-    receiver: "",
-    token: "",
     tokenAmount: 0,
-    tokenSymbol: "",
   });
+  const [action, setAction] = useState<"wrap" | "unwrap">("wrap");
+
+  const [txDetails, setTxDetails] = useState<
+    | {
+        txState?: "inProgress" | "done";
+        value: number;
+        tokenInfo: TokenConfig;
+        txHash?: string;
+        action: "wrap" | "unwrap";
+      }
+    | undefined
+  >(undefined);
 
   const handleConnect = async () => {
     setWalletConnecting(true);
@@ -231,52 +240,122 @@ const MinterPage = () => {
     setWalletConnecting(false);
   };
 
-  const mintTokens = async (tokens: string) => {
-    const signer = provider?.getSigner();
-    if (!address || !signer) {
-      console.log("No signer");
-      return;
-    }
-    console.log(tokens);
-    const erc20s = Erc20DetailedFactory.connect(tokens, signer);
-    console.log(erc20s);
+  const handleWrapToken = async () => {
+    if (!wrapTokenConfig || !wrapToken || !homeChain) return;
+
     try {
-      await erc20s.mintTokens();
+      setTxDetails({
+        tokenInfo: wrapTokenConfig,
+        value: preflightDetails.tokenAmount,
+        txState: "inProgress",
+        action: action,
+      });
+      const tx = await wrapToken({
+        value: parseUnits(`${preflightDetails.tokenAmount}`, DECIMALS),
+        gasPrice: BigNumber.from(
+          utils.parseUnits(
+            (homeChain.defaultGasPrice || gasPrice).toString(),
+            9
+          )
+        ).toString(),
+      });
+
+      await tx?.wait();
+      setTxDetails({
+        tokenInfo: wrapTokenConfig,
+        value: preflightDetails.tokenAmount,
+        txHash: tx?.hash,
+        txState: "done",
+        action: action,
+      });
     } catch (error) {
-      console.log(error);
-      return Promise.reject();
+      console.error(error);
     }
   };
 
-  type DestinationChains = {
-    chainId: number;
-    name: string;
-  }[];
+  const handleUnwrapToken = async () => {
+    if (!wrapTokenConfig || !unwrapToken || !homeChain) return;
 
-  let filteredDestinationChains: DestinationChains = destinationChains;
-  // If we are on an Ethereum chain already, do not show other Ethereum chains.
-  if (homeChain?.name.includes("Ethereum")) {
-    filteredDestinationChains = destinationChains.filter(
-      (chain) => !chain.name.includes("Ethereum")
-    );
-  }
+    try {
+      setTxDetails({
+        tokenInfo: wrapTokenConfig,
+        value: preflightDetails.tokenAmount,
+        txState: "inProgress",
+        action: action,
+      });
+      const tx = await unwrapToken(
+        parseUnits(`${preflightDetails.tokenAmount}`, DECIMALS),
+        {
+          gasPrice: utils
+            .parseUnits((homeChain.defaultGasPrice || gasPrice).toString(), 9)
+            .toString(),
+        }
+      );
 
-  // TODO: line 467: How to pull correct HomeChain Symbol
+      await tx?.wait();
+      setTxDetails({
+        tokenInfo: wrapTokenConfig,
+        value: preflightDetails.tokenAmount,
+        txHash: tx?.hash,
+        txState: "done",
+        action: action,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const DECIMALS = 18;
+  const REGEX =
+    DECIMALS > 0
+      ? new RegExp(`^[0-9]{1,18}(.[0-9]{1,${DECIMALS}})?$`)
+      : new RegExp(`^[0-9]{1,18}?$`);
+
+  const wrapSchema = object().shape({
+    tokenAmount: string()
+      .matches(REGEX, "Input invalid")
+      .test("Min", "Less than minimum", (value) => {
+        if (value) {
+          return parseFloat(value) > 0;
+        }
+        return false;
+      })
+      .test("Max", "Insufficent funds", (value) => {
+        return action === "wrap"
+          ? ethBalance && value && parseFloat(value) <= ethBalance
+            ? true
+            : false
+          : tokens[wrapTokenConfig?.address || "0x"].balance &&
+            value &&
+            parseFloat(value) <=
+              tokens[wrapTokenConfig?.address || "0x"]?.balance
+          ? true
+          : false;
+      })
+      .required("Please set a value"),
+  });
 
   return (
     <article className={classes.root}>
       <div className={classes.walletArea}>
         {!isReady ? (
-          <Button
-            className={classes.connectButton}
-            fullsize
-            variant="primary"
-            onClick={() => {
-              handleConnect();
-            }}
-          >
-            Connect MetaMask
-          </Button>
+          <>
+            <Typography className={classes.blurb} component="p" variant="h5">
+              To convert a token that needs to be wrapped, please connect to the
+              network that the token exists natively for. For example, to
+              convert OMN into wrapped OMN (wOMN), your wallet must be connected
+              to OM network.
+            </Typography>
+            <Button
+              className={classes.connectButton}
+              fullsize
+              onClick={() => {
+                handleConnect();
+              }}
+            >
+              Connect Metamask
+            </Button>
+          </>
         ) : walletConnecting ? (
           <section className={classes.connecting}>
             <Typography component="p" variant="h5">
@@ -309,11 +388,14 @@ const MinterPage = () => {
       <Formik
         initialValues={{
           tokenAmount: 0,
-          token: "",
-          receiver: "",
         }}
-        onSubmit={(tokenAddress) => {
-          mintTokens(tokenAddress.token);
+        validationSchema={wrapSchema}
+        validateOnChange={false}
+        onSubmit={(values) => {
+          setPreflightDetails({
+            ...values,
+          });
+          setPreflightModalOpen(true);
         }}
       >
         <Form
@@ -321,94 +403,74 @@ const MinterPage = () => {
             disabled: !homeChain,
           })}
         >
-          <section>
-            <SelectInput
-              label="Destination Network"
-              className={classes.generalInput}
-              disabled={!homeChain}
-              options={filteredDestinationChains.map((dc) => ({
-                label: dc.name,
-                value: dc.chainId,
-              }))}
-              onChange={(value) => setDestinationChain(value)}
-              value={destinationChain?.chainId}
-            />
-          </section>
           <section className={classes.currencySection}>
-            <section className={classes.currencySelector}>
-              <TokenSelectInput
-                tokens={tokens}
-                name="token"
-                label="Token"
-                disabled={!destinationChain}
-                className={classes.generalInput}
-                placeholder=""
-                options={
-                  Object.keys(tokens).map((t) => ({
-                    value: t,
+            <section>
+              <div
+                className={clsx(classes.tokenInputArea, classes.generalInput)}
+              >
+                <SimpleTokenInput
+                  classNames={{
+                    input: clsx(classes.tokenInput, classes.generalInput),
+                    button: classes.maxButton,
+                  }}
+                  name="tokenAmount"
+                  label="I want to convert"
+                  max={
+                    action === "wrap"
+                      ? ethBalance
+                      : tokens[wrapTokenConfig?.address || "0x"]?.balance
+                  }
+                />
+              </div>
+            </section>
+            <section className={classes.tokenIndicator}>
+              <Typography component="p">
+                Balance:{" "}
+                {action === "wrap"
+                  ? ethBalance
+                    ? ethBalance.toFixed(2)
+                    : 0.0
+                  : tokens[wrapTokenConfig?.address || "0x"].balance}
+              </Typography>
+              <SelectInput
+                options={[
+                  {
                     label: (
                       <div className={classes.tokenItem}>
-                        {tokens[t]?.imageUri && (
-                          <img
-                            src={tokens[t]?.imageUri}
-                            alt={tokens[t]?.symbol}
-                          />
-                        )}
-                        <span>{tokens[t]?.symbol || t}</span>
+                        <ETHIcon />
+                        <span>OMN</span>
                       </div>
                     ),
-                  })) || []
-                }
+                    value: "wrap",
+                  },
+                  {
+                    label: (
+                      <div className={classes.tokenItem}>
+                        <img
+                          src={wrapTokenConfig?.imageUri}
+                          alt={wrapTokenConfig?.symbol}
+                        />
+                        <span>{wrapTokenConfig?.symbol || "wETH"}</span>
+                      </div>
+                    ),
+                    value: "unwrap",
+                  },
+                ]}
+                onChange={(val) => setAction(val)}
+                value={action}
               />
             </section>
           </section>
-          <section className={classes.currencySection}>
-            <section className={classes.balanceSection}>
-              <Balance
-                tokens={tokens}
-                sync={(tokenAddress: string) => {
-                  setPreflightDetails({
-                    ...preflightDetails,
-                    token: tokenAddress,
-                    receiver: "",
-                    tokenAmount: 0,
-                    tokenSymbol: "",
-                  });
-                }}
-              />
-            </section>
-          </section>
-          <section className={classes.transferButtonSection}>
-            <Button
-              type="submit"
-              fullsize
-              variant="primary"
-              disabled={!isReady}
-            >
-              Mint Tokens
+          <section className={classes.submitButtonArea}>
+            <Button type="submit" fullsize variant="primary">
+              {action === "wrap" ? "Wrap Token" : "Unwrap token"}
             </Button>
           </section>
-          <section className={classes.moreInfo}>
-            <i
-              className="far fa-question-circle fa-2x"
+          <section>
+            <QuestionCircleSvg
               onClick={() => setAboutOpen(true)}
+              className={classes.faqButton}
             />
-            <section className={classes.moonbeamLinks}>
-              <a
-                rel="noopener noreferrer"
-                href="https://moonbeam.network/"
-                target="_blank"
-              >
-                Moonbeam Network
-              </a>
-              <a
-                rel="noopener noreferrer"
-                href="https://docs.moonbeam.network/"
-                target="_blank"
-              >
-                Documentation
-              </a>
-            </section>
           </section>
         </Form>
       </Formik>
@@ -418,11 +480,49 @@ const MinterPage = () => {
         close={() => setChangeNetworkOpen(false)}
       />
       <NetworkUnsupportedModal
-        open={!homeChain && isReady}
+        open={!wrapTokenConfig && isReady}
         network={network}
-        supportedNetworks={chainbridgeConfig.chains.map((bc) => bc.networkId)}
+        supportedNetworks={chainbridgeConfig.chains
+          .filter((bc) => bc.tokens.find((t) => t.isNativeWrappedToken))
+          .map((bc) => bc.networkId)}
       />
+      <PreflightModalWrap
+        open={preflightModalOpen}
+        close={() => setPreflightModalOpen(false)}
+        sender={address || ""}
+        start={() => {
+          if (action === "wrap") {
+            handleWrapToken();
+            setPreflightModalOpen(false);
+          } else {
+            handleUnwrapToken();
+            setPreflightModalOpen(false);
+          }
+        }}
+        sourceNetwork={homeChain?.name || ""}
+        tokenSymbol={
+          action === "wrap"
+            ? homeChain?.nativeTokenSymbol || "OMN"
+            : wrapTokenConfig?.symbol || "wOMN"
+        }
+        value={preflightDetails?.tokenAmount || 0}
+        wrappedTitle={
+          action === "wrap"
+            ? `${wrapTokenConfig?.name} (${wrapTokenConfig?.symbol})`
+            : homeChain?.nativeTokenSymbol || "OMN"
+        }
+        action={action}
+      />
+      {txDetails && (
+        <WrapActiveModal
+          {...txDetails}
+          close={() => {
+            setTxDetails(undefined);
+            forwardTo(ROUTE_LINKS.Transfer);
+          }}
+        />
+      )}
     </article>
   );
 };
-export default MinterPage;
+export default MainPage;

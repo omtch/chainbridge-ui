@@ -486,7 +486,7 @@ const TransferPage = () => {
               Start Transfer
             </Button>
           </section>
-          <section className={classes.moreInfo}>
+          {/* <section className={classes.moreInfo}>
             <i
               className="far fa-question-circle fa-2x"
               onClick={() => setAboutOpen(true)}
@@ -507,7 +507,7 @@ const TransferPage = () => {
                 Documentation
               </a>
             </section>
-          </section>
+          </section> */}
         </Form>
       </Formik>
       <AboutDrawer open={aboutOpen} close={() => setAboutOpen(false)} />

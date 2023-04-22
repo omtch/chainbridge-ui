@@ -65,10 +65,10 @@ const AppHeader: React.FC<IAppHeader> = () => {
   return (
     <header className={clsx(classes.root)}>
       <div className={classes.left}>
-        <div className={classes.logo}>
+        {/* <div className={classes.logo}>
           <img alt="Moonbeam logo" src={logo}></img>
-        </div>
-        <Typography variant="h4">Moonbase Alpha ChainBridge</Typography>
+        </div> */}
+        <Typography variant="h4">Omega Alpha ChainBridge</Typography>
       </div>
       <section className={classes.state}>
         {!isReady ? (

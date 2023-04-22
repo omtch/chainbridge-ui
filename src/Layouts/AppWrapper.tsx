@@ -87,7 +87,7 @@ const AppWrapper: React.FC<IAppWrapper> = ({ children }: IAppWrapper) => {
                 <Typography variant="h4">Transfer</Typography>
               </NavLink>
               <NavLink activeClassName="active" to={ROUTE_LINKS.Mint}>
-                <Typography variant="h4">Mint ERC20S</Typography>
+                <Typography variant="h4">Wrap OMNs</Typography>
               </NavLink>
             </section>
             {children}
