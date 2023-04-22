@@ -40,7 +40,7 @@ export const chainbridgeConfig: ChainbridgeConfig = {
       erc20HandlerAddress: "0x791E491B418949456b7A614980Dd7bd0E9B2aBE3",
       rpcUrl: "https://test-rpc.omtch.com",
       type: "Ethereum",
-      blockExplorer: "https://test-explorer.omtch.com/tx",
+      blockExplorer: "https://test-explorer.omtch.com",
       nativeTokenSymbol: "OMN",
       tokens: [
         {
@@ -62,7 +62,7 @@ export const chainbridgeConfig: ChainbridgeConfig = {
       erc20HandlerAddress: "0xC3c32d30DAc5B80a0dF9712FeC9604BAB2f12D1b",
       rpcUrl: "https://www.ethercluster.com/kotti",
       type: "Ethereum",
-      blockExplorer: "https://testnet.bscscan.com/tx",
+      blockExplorer: "https://testnet.bscscan.com",
       nativeTokenSymbol: "BNB",
       tokens: [
         {
