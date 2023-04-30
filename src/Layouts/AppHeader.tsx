@@ -71,7 +71,7 @@ const AppHeader: React.FC<IAppHeader> = () => {
         </div> */}
         {/* eslint-disable-next-line */}
         <img src="./image/logo.png"/>
-        <Typography variant="h4">ChainBridge Token Swap</Typography>
+        <Typography variant="h4">  <img src="./image/logo.png"/>ChainBridge Token Swap</Typography>
       </div>
       <section className={classes.state}>
         {!isReady ? (
