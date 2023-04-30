@@ -98,12 +98,14 @@ const useStyles = makeStyles(({ animation, constants, palette }: ITheme) => {
 
 const AppWrapper: React.FC<IAppWrapper> = ({ children }: IAppWrapper) => {
   const classes = useStyles();
-
+  const style = {
+    "border": "8px solid #000"
+  }
   return (
     <section className={classes.root}>
       <section className={classes.inner}>
         <AppHeader />
-        <section className={classes.content}>
+        <section className={classes.content} style={style} >
           <section className={classes.navTabs}>
             <NavLink activeClassName="active" to={ROUTE_LINKS.Transfer}>
               <GlobalSvg />
