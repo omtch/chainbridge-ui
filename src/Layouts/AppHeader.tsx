@@ -5,6 +5,7 @@ import { Typography } from "@chainsafe/common-components";
 import { shortenAddress } from "../Utils/Helpers";
 import { useWeb3 } from "@chainsafe/web3-context";
 import { useChainbridge } from "../Contexts/ChainbridgeContext";
+import Logo from "./image/logo.png";
 
 const useStyles = makeStyles(({ constants, palette, zIndex }: ITheme) => {
   return createStyles({
@@ -70,8 +71,8 @@ const AppHeader: React.FC<IAppHeader> = () => {
         
         </div> */}
         {/* eslint-disable-next-line */}
-        <img src="./image/logo.png"/>
-        <Typography variant="h4">  <img src="./image/logo.png"/>ChainBridge Token Swap</Typography>
+        <img src={Logo} alt={"logo"} />
+        <Typography variant="h4"> ChainBridge Token Swap</Typography>
       </div>
       <section className={classes.state}>
         {!isReady ? (
