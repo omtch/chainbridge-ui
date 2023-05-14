@@ -14,6 +14,8 @@ import AppWrapper from "./Layouts/AppWrapper";
 import { Web3Provider } from "@chainsafe/web3-context";
 import { chainbridgeConfig } from "./chainbridgeConfig";
 import { utils } from "ethers";
+import { ReactComponent as ImgBackCircle1 } from "./assets/img_back_circle_1.svg";
+import { ReactComponent as ImgBackCircle2 } from "./assets/img_back_circle_2.svg";
 
 if (
   process.env.NODE_ENV === "production" &&
@@ -74,6 +76,8 @@ const App: React.FC<{}> = () => {
           >
             <ChainbridgeProvider>
               <Router>
+                <ImgBackCircle1 className={"back-circle-1"} />
+                <ImgBackCircle2 className={"back-circle-2"} />
                 <AppWrapper>
                   <Routes />
                 </AppWrapper>

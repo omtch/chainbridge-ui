@@ -1,0 +1,15 @@
+<svg width="646.828125" height="646.828064" viewBox="0 0 646.828 646.828" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<desc>
+			Created with Pixso.
+	</desc>
+	<g filter="url(#filter_1_194_dd)">
+		<circle id="椭圆形备份" cx="323.414062" cy="323.414001" r="187.500000" fill="#E7F5FF"/>
+	</g>
+	<defs>
+		<filter id="filter_1_194_dd" x="0.000000" y="0.000000" width="646.828125" height="646.828064" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+			<feGaussianBlur stdDeviation="45.3047" result="effect_layerBlur_1"/>
+		</filter>
+	</defs>
+</svg>
