@@ -65,7 +65,7 @@ export const chainbridgeConfig: ChainbridgeConfig = {
       name: "BSC - testnet",
       bridgeAddress: "0x3b4fA0A8a4C31daA86F6eD049BB201E2A4449C98",
       erc20HandlerAddress: "0xC3c32d30DAc5B80a0dF9712FeC9604BAB2f12D1b",
-      rpcUrl: "https://data-seed-prebsc-1-s3.binance.org:8545",
+      rpcUrl: "https://endpoints.omniatech.io/v1/bsc/testnet/public",
       type: "Ethereum",
       blockExplorer: "https://testnet.bscscan.com",
       nativeTokenSymbol: "BNB",

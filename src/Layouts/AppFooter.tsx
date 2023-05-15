@@ -13,6 +13,7 @@ const Wrapper = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 32px;
   .icon-wrapper {
     display: flex;
     align-items: center;
@@ -92,7 +93,7 @@ const links = [
 const AppFooter: React.FC = () => {
   return (
     <Wrapper>
-      <div className={"powered"}>Powered by Omega Network bridge</div>
+      <div className={"powered"}>Powered by Omega Bridge</div>
       <div className={"icon-wrapper"}>
         {icons.map((i) => (
           <IconItem
