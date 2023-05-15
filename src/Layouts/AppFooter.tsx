@@ -92,7 +92,7 @@ const links = [
 const AppFooter: React.FC = () => {
   return (
     <Wrapper>
-      <div className={"powered"}>Powered by Comega bridge</div>
+      <div className={"powered"}>Powered by Omega Network bridge</div>
       <div className={"icon-wrapper"}>
         {icons.map((i) => (
           <IconItem
