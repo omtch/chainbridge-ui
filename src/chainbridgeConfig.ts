@@ -71,12 +71,12 @@ export const chainbridgeConfig: ChainbridgeConfig = {
       nativeTokenSymbol: "BNB",
       tokens: [
         {
-          address: "0x23A9FD05ef0c5fb9dDE964C4d4191A169Fd221f8",
+          address: "0x396a54aDe6b3357350d981Fa7d703A2cAe21543E",
           name: "Wrapped OMN",
-          symbol: "wOMN",
+          symbol: "OMN",
           imageUri: IconOmegaCoin,
           resourceId:
-            "0x000000000000000000000023A9FD05ef0c5fb9dDE964C4d4191A169Fd221f802",
+            "0x00000000000000000000000001bdcf41db44c1f92acbbd016f56c1593aab1258",
         },
       ],
       chainIcon: IconBSC,
