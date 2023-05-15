@@ -1299,10 +1299,8 @@
     reset-css "^5.0.1"
     rollup-plugin-babel "^4.4.0"
 
-"@chainsafe/common-theme@1.0.6":
+"@chainsafe/common-theme@./chainsafeModules/common-theme":
   version "1.0.6"
-  resolved "https://registry.yarnpkg.com/@chainsafe/common-theme/-/common-theme-1.0.6.tgz#7b0afc491ce30d3035a69ddfd04e53eef0595c66"
-  integrity sha512-ULtNirb9oWMio1gtGfcU9iTcF/oaIeogG8KmtvmHlHWiMvshet9JhFbrrpXd4BmhQ+Y9K9SMDT1Eaz6+Gr4dng==
   dependencies:
     ts-essentials "^7.0.1"
 

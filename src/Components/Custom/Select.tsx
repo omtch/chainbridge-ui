@@ -100,6 +100,7 @@ export const Select: React.FC<Props> = ({
                 setOpen(false);
               }}
               className={"option-item"}
+              key={op.name}
             >
               <img src={op.logo} alt={""} />
               <span className={"chain-name"}>{op.name}</span>

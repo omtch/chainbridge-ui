@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { init, ErrorBoundary, showReportDialog } from "@sentry/react";
 import { ThemeSwitcher } from "@chainsafe/common-theme";
 import {
@@ -11,11 +11,12 @@ import Routes from "./Components/Routes";
 import { lightTheme } from "./Themes/LightTheme";
 import { ChainbridgeProvider } from "./Contexts/ChainbridgeContext";
 import AppWrapper from "./Layouts/AppWrapper";
-import { Web3Provider } from "@chainsafe/web3-context";
+import { useWeb3, Web3Provider } from "@chainsafe/web3-context";
 import { chainbridgeConfig } from "./chainbridgeConfig";
 import { utils } from "ethers";
 import { ReactComponent as ImgBackCircle1 } from "./assets/img_back_circle_1.svg";
 import { ReactComponent as ImgBackCircle2 } from "./assets/img_back_circle_2.svg";
+import { switchToNetwork } from "./Utils/switchToNetwork";
 
 if (
   process.env.NODE_ENV === "production" &&
@@ -35,6 +36,11 @@ const App: React.FC<{}> = () => {
       [bc.networkId]: bc.tokens,
     };
   }, {});
+  useEffect(() => {
+    const ethereum = (window as any)?.ethereum;
+    ethereum?.removeAllListeners(["networkChanged"]);
+  }, []);
+
   return (
     <ErrorBoundary
       fallback={({ error, componentStack, eventId, resetError }) => (

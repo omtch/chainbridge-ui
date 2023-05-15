@@ -84,7 +84,7 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
     },
     formArea: {
       "&.disabled": {
-        opacity: 0.4,
+        // opacity: 0.4,
       },
     },
     currencySection: {

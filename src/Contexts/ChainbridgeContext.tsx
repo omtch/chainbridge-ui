@@ -175,7 +175,7 @@ const ChainbridgeProvider = ({ children }: IChainbridgeContextProps) => {
   }, [destinationChain]);
 
   useEffect(() => {
-    if (network && isReady) {
+    if (network) {
       const home = chainbridgeConfig.chains.find(
         (c) => c.networkId === network
       );

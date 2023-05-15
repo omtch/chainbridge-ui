@@ -1,5 +1,5 @@
 import { createStyles, ITheme, makeStyles } from "@chainsafe/common-theme";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import { Typography, NavLink, useLocation } from "@chainsafe/common-components";
 import { shortenAddress } from "../Utils/Helpers";
@@ -14,6 +14,7 @@ import { ReactComponent as IconLogoMobile } from "../assets/icon_logo.svg";
 import { ReactComponent as IconMetamask } from "../assets/icon_metamask.svg";
 import { ReactComponent as IconEllipsis } from "../assets/icon_ellipsis.svg";
 import { ReactComponent as IconMenu } from "../assets/icon_menu.svg";
+import { switchToNetwork } from "../Utils/switchToNetwork";
 
 const NavItem = styled.div`
   padding: 8px 14px;
@@ -271,14 +272,38 @@ interface IAppHeader {}
 
 const AppHeader: React.FC<IAppHeader> = () => {
   const classes = useStyles();
-  const { isReady, address, wallet, onboard, checkIsReady } = useWeb3();
+  const {
+    isReady,
+    address,
+    wallet,
+    onboard,
+    checkIsReady,
+    network,
+  } = useWeb3();
   const { homeChain } = useChainbridge();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleConnect = async () => {
     !wallet && (await onboard?.walletSelect());
     await checkIsReady();
+    if (network && network !== 816 && network !== 97) {
+      await switchToNetwork({ chainId: 816 });
+      window.location.reload();
+    }
   };
+  const ethereum = (window as any)?.ethereum;
+
+  useEffect(() => {
+    async function updateChain() {
+      if (ethereum) {
+        if (network && network !== 816 && network !== 97) {
+          await switchToNetwork({ chainId: 816 });
+          window.location.reload();
+        }
+      }
+    }
+    updateChain();
+  }, [network, ethereum]);
 
   return (
     <HeaderWrapper className={clsx(classes.root)}>
@@ -299,7 +324,7 @@ const AppHeader: React.FC<IAppHeader> = () => {
         ))}
       </div>
       <section className={classes.state}>
-        {isReady && address ? (
+        {address ? (
           <>
             {homeChain?.name && (
               <Network>
