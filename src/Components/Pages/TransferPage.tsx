@@ -19,11 +19,18 @@ import { chainbridgeConfig } from "../../chainbridgeConfig";
 import FeesFormikWrapped from "./FormikContextElements/Fees";
 import Balance from "../Custom/Balance";
 import { MOONBEAM_CYAN } from "../../Themes/LightTheme";
+import { Chain, Select } from "../Custom/Select";
+import styled from "styled-components";
+import { AmountInput } from "../Custom/AmountInput";
+import { Button as TxButton } from "../Custom/Button";
+import { ReactComponent as IconExchange } from "../../assets/icon_exchange.svg";
+import { switchToNetwork } from "../../Utils/switchToNetwork";
 
 const useStyles = makeStyles(({ constants, palette }: ITheme) =>
   createStyles({
     root: {
-      padding: `${constants.generalUnit}px ${constants.generalUnit * 6}px`,
+      // padding: `${constants.generalUnit}px ${constants.generalUnit * 6}px`,
+      padding: "32px",
       position: "relative",
       width: "100%",
     },
@@ -190,8 +197,45 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
       flexDirection: "column",
       justifyContent: "space-between",
     },
+    transferButton: {
+      marginTop: "66px",
+    },
   })
 );
+
+const SelectChain = styled.div`
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 8px;
+  .label {
+    margin-right: 10px;
+    color: rgb(95, 95, 95);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+  }
+`;
+
+export const Exchange = styled.div`
+  background: rgb(99, 126, 234);
+  padding: 6px;
+  border-radius: 6px;
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  margin-bottom: 8px;
+  cursor: pointer;
+  svg {
+    transform: rotate(-90deg);
+    path {
+      fill: white;
+    }
+  }
+`;
 
 type PreflightDetails = {
   tokenAmount: number;
@@ -225,6 +269,7 @@ const TransferPage = () => {
   type DestinationChains = {
     chainId: number;
     name: string;
+    chainIcon: string;
   }[];
 
   let filteredDestinationChains: DestinationChains = destinationChains;
@@ -239,6 +284,12 @@ const TransferPage = () => {
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [changeNetworkOpen, setChangeNetworkOpen] = useState<boolean>(false);
   const [preflightModalOpen, setPreflightModalOpen] = useState<boolean>(false);
+  const [inputValue, setInputValue] = useState("");
+  const [txLoading, setTxLoading] = useState(false);
+  const currentChainToken = chainbridgeConfig.chains.find(
+    (i) => i.chainId === homeChain?.chainId
+  )?.tokens?.[0];
+  const tokenBalance = tokens?.[currentChainToken?.address as string]?.balance;
 
   const [preflightDetails, setPreflightDetails] = useState<PreflightDetails>({
     receiver: "",
@@ -312,50 +363,58 @@ const TransferPage = () => {
       .required("Please add a receiving address"),
   });
 
+  const handleExchange = async () => {
+    const targetChain = chainbridgeConfig.chains.find(
+      (chain) => chain.networkId !== homeChain?.networkId
+    );
+    await switchToNetwork({ chainId: targetChain?.networkId! });
+    window.location.reload();
+  };
+
   // TODO: line 467: How to pull correct HomeChain Symbol
   return (
     <article className={classes.root}>
-      <div className={classes.walletArea}>
-        {!isReady ? (
-          <Button
-            className={classes.connectButton}
-            fullsize
-            variant="primary"
-            onClick={() => {
-              handleConnect();
-            }}
-          >
-            Connect MetaMask
-          </Button>
-        ) : walletConnecting ? (
-          <section className={classes.connecting}>
-            <Typography component="p" variant="h5">
-              This app requires access to your wallet, <br />
-              please login and authorize access to continue.
-            </Typography>
-          </section>
-        ) : (
-          <section className={classes.connected}>
-            <div>
-              <Typography variant="body1">Home Network</Typography>
-              <Button
-                className={classes.changeButton}
-                variant="outline"
-                onClick={() => setChangeNetworkOpen(true)}
-              >
-                Change
-              </Button>
-            </div>
-            <Typography
-              component="h3"
-              variant="h3"
-              className={classes.networkName}
-            >
-              {homeChain?.name}
-            </Typography>
-          </section>
-        )}
-      </div>
+      {/*<div className={classes.walletArea}>*/}
+      {/*  {!isReady ? (*/}
+      {/*    <Button*/}
+      {/*      className={classes.connectButton}*/}
+      {/*      fullsize*/}
+      {/*      variant="primary"*/}
+      {/*      onClick={() => {*/}
+      {/*        handleConnect();*/}
+      {/*      }}*/}
+      {/*    >*/}
+      {/*      Connect MetaMask*/}
+      {/*    </Button>*/}
+      {/*  ) : walletConnecting ? (*/}
+      {/*    <section className={classes.connecting}>*/}
+      {/*      <Typography component="p" variant="h5">*/}
+      {/*        This app requires access to your wallet, <br />*/}
+      {/*        please login and authorize access to continue.*/}
+      {/*      </Typography>*/}
+      {/*    </section>*/}
+      {/*  ) : (*/}
+      {/*    <section className={classes.connected}>*/}
+      {/*      <div>*/}
+      {/*        <Typography variant="body1">Home Network</Typography>*/}
+      {/*        <Button*/}
+      {/*          className={classes.changeButton}*/}
+      {/*          variant="outline"*/}
+      {/*          onClick={() => setChangeNetworkOpen(true)}*/}
+      {/*        >*/}
+      {/*          Change*/}
+      {/*        </Button>*/}
+      {/*      </div>*/}
+      {/*      <Typography*/}
+      {/*        component="h3"*/}
+      {/*        variant="h3"*/}
+      {/*        className={classes.networkName}*/}
+      {/*      >*/}
+      {/*        {homeChain?.name}*/}
+      {/*      </Typography>*/}
+      {/*    </section>*/}
+      {/*  )}*/}
+      {/*</div>*/}
       <Formik
         initialValues={{
           tokenAmount: 0,
@@ -378,114 +437,201 @@ const TransferPage = () => {
           })}
         >
           <section>
-            <SelectInput
-              label="Destination Network"
-              className={classes.generalInput}
-              disabled={!homeChain}
-              options={filteredDestinationChains.map((dc) => ({
-                label: dc.name,
-                value: dc.chainId,
-              }))}
-              onChange={(value) => setDestinationChain(value)}
-              value={destinationChain?.chainId}
-            />
-          </section>
-          <section className={classes.currencySection}>
-            <section className={classes.currencySelector}>
-              <TokenSelectInput
-                tokens={tokens}
-                name="token"
-                label="Token"
-                disabled={!destinationChain}
-                className={classes.generalInput}
-                placeholder=""
-                options={
-                  Object.keys(tokens).map((t) => ({
-                    value: t,
-                    label: (
-                      <div className={classes.tokenItem}>
-                        {tokens[t]?.imageUri && (
-                          <img
-                            src={tokens[t]?.imageUri}
-                            alt={tokens[t]?.symbol}
-                          />
-                        )}
-                        <span>{tokens[t]?.symbol || t}</span>
-                      </div>
-                    ),
-                  })) || []
-                }
-              />
-            </section>
-            <section className={classes.balanceSection}>
-              <Balance
-                tokens={tokens}
-                sync={(tokenAddress: string) => {
-                  setPreflightDetails({
-                    ...preflightDetails,
-                    token: tokenAddress,
-                    receiver: "",
-                    tokenAmount: 0,
-                    tokenSymbol: "",
-                  });
-                }}
-              />
-            </section>
-          </section>
-          <section className={classes.currencySection}>
-            <section>
-              <div
-                className={clsx(classes.tokenInputArea, classes.generalInput)}
-              >
-                <TokenInput
-                  classNames={{
-                    input: clsx(classes.tokenInput, classes.generalInput),
-                    button: classes.maxButton,
+            <SelectChain>
+              <div className={"label"}>From</div>
+              {homeChain && (
+                <Select
+                  selectedChain={{
+                    logo: homeChain!.chainIcon,
+                    value: homeChain!.chainId,
+                    name: homeChain!.name,
                   }}
-                  tokenSelectorKey="token"
-                  tokens={tokens}
-                  disabled={
-                    !destinationChain ||
-                    !preflightDetails.token ||
-                    preflightDetails.token === ""
-                  }
-                  name="tokenAmount"
-                  label="Amount To Send"
+                  options={[
+                    {
+                      logo: homeChain!.chainIcon,
+                      value: homeChain!.chainId,
+                      name: homeChain!.name,
+                    },
+                  ]}
+                  onChange={(value) => {}}
                 />
-              </div>
-            </section>
-          </section>
-          <section>
-            <AddressInput
-              disabled={!destinationChain}
-              name="receiver"
-              label="Destination Address"
-              placeholder="Please enter the receiving address"
-              className={classes.address}
-              senderAddress={`${address}`}
+              )}
+            </SelectChain>
+            <AmountInput
+              inputValue={inputValue}
+              handleInputChange={(val) => {
+                const sanitizedValue = val.replace(/[^0-9.]/g, "");
+
+                if (sanitizedValue.match(/^\d*\.?\d*$/)) {
+                  setInputValue(sanitizedValue);
+                }
+              }}
+              label={"Send:"}
+              token={currentChainToken as any}
+              maxAmount={tokenBalance}
             />
+            <Exchange>
+              <IconExchange onClick={handleExchange} />
+            </Exchange>
+
+            <SelectChain>
+              <div className={"label"}>To</div>
+              {destinationChain && (
+                <Select
+                  selectedChain={{
+                    logo: destinationChain!.chainIcon,
+                    value: destinationChain!.chainId,
+                    name: destinationChain!.name,
+                  }}
+                  options={filteredDestinationChains.map((dc) => ({
+                    name: dc.name,
+                    value: dc.chainId,
+                    logo: dc.chainIcon,
+                  }))}
+                  onChange={(value) => setDestinationChain(value.value)}
+                />
+              )}
+            </SelectChain>
+            <AmountInput
+              inputValue={inputValue}
+              handleInputChange={(val) => setInputValue(val)}
+              label={"Received:"}
+              disabled
+            />
+
+            {/*<SelectInput*/}
+            {/*  label="Destination Network"*/}
+            {/*  className={classes.generalInput}*/}
+            {/*  disabled={!homeChain}*/}
+            {/*  options={filteredDestinationChains.map((dc) => ({*/}
+            {/*    label: dc.name,*/}
+            {/*    value: dc.chainId,*/}
+            {/*  }))}*/}
+            {/*  onChange={(value) => setDestinationChain(value)}*/}
+            {/*  value={destinationChain?.chainId}*/}
+            {/*/>*/}
           </section>
-          <FeesFormikWrapped
-            amountFormikName="tokenAmount"
-            className={classes.fees}
-            fee={bridgeFee}
-            feeSymbol={homeChain?.nativeTokenSymbol}
-            symbol={
-              preflightDetails && tokens[preflightDetails.token]
-                ? tokens[preflightDetails.token].symbol
-                : undefined
+          <TxButton
+            className={classes.transferButton}
+            label={"Transfer"}
+            loading={txLoading}
+            disabled={
+              !currentChainToken || !address || Number(inputValue) === 0
             }
+            onClick={async () => {
+              try {
+                setTxLoading(true);
+                if (!currentChainToken || !address || Number(inputValue) === 0)
+                  return;
+                await deposit(
+                  Number(inputValue),
+                  address,
+                  currentChainToken.address
+                );
+              } catch (e) {
+                console.log("Tx error: ", e);
+              } finally {
+                setTxLoading(false);
+              }
+            }}
           />
-          <section className={classes.transferButtonSection}>
-            <Button
-              type="submit"
-              fullsize
-              variant="primary"
-              disabled={!isReady}
-            >
-              Start Transfer
-            </Button>
-          </section>
+
+          {/*<section className={classes.currencySection}>*/}
+          {/*  <section className={classes.currencySelector}>*/}
+          {/*    <TokenSelectInput*/}
+          {/*      tokens={tokens}*/}
+          {/*      name="token"*/}
+          {/*      label="Token"*/}
+          {/*      disabled={!destinationChain}*/}
+          {/*      className={classes.generalInput}*/}
+          {/*      placeholder=""*/}
+          {/*      options={*/}
+          {/*        Object.keys(tokens).map((t) => ({*/}
+          {/*          value: t,*/}
+          {/*          label: (*/}
+          {/*            <div className={classes.tokenItem}>*/}
+          {/*              {tokens[t]?.imageUri && (*/}
+          {/*                <img*/}
+          {/*                  src={tokens[t]?.imageUri}*/}
+          {/*                  alt={tokens[t]?.symbol}*/}
+          {/*                />*/}
+          {/*              )}*/}
+          {/*              <span>{tokens[t]?.symbol || t}</span>*/}
+          {/*            </div>*/}
+          {/*          ),*/}
+          {/*        })) || []*/}
+          {/*      }*/}
+          {/*    />*/}
+          {/*  </section>*/}
+          {/*  <section className={classes.balanceSection}>*/}
+          {/*    <Balance*/}
+          {/*      tokens={tokens}*/}
+          {/*      sync={(tokenAddress: string) => {*/}
+          {/*        setPreflightDetails({*/}
+          {/*          ...preflightDetails,*/}
+          {/*          token: tokenAddress,*/}
+          {/*          receiver: "",*/}
+          {/*          tokenAmount: 0,*/}
+          {/*          tokenSymbol: "",*/}
+          {/*        });*/}
+          {/*      }}*/}
+          {/*    />*/}
+          {/*  </section>*/}
+          {/*</section>*/}
+          {/*<section className={classes.currencySection}>*/}
+          {/*  <section>*/}
+          {/*    <div*/}
+          {/*      className={clsx(classes.tokenInputArea, classes.generalInput)}*/}
+          {/*    >*/}
+          {/*      <TokenInput*/}
+          {/*        classNames={{*/}
+          {/*          input: clsx(classes.tokenInput, classes.generalInput),*/}
+          {/*          button: classes.maxButton,*/}
+          {/*        }}*/}
+          {/*        tokenSelectorKey="token"*/}
+          {/*        tokens={tokens}*/}
+          {/*        disabled={*/}
+          {/*          !destinationChain ||*/}
+          {/*          !preflightDetails.token ||*/}
+          {/*          preflightDetails.token === ""*/}
+          {/*        }*/}
+          {/*        name="tokenAmount"*/}
+          {/*        label="Amount To Send"*/}
+          {/*      />*/}
+          {/*    </div>*/}
+          {/*  </section>*/}
+          {/*</section>*/}
+          {/*<section>*/}
+          {/*  <AddressInput*/}
+          {/*    disabled={!destinationChain}*/}
+          {/*    name="receiver"*/}
+          {/*    label="Destination Address"*/}
+          {/*    placeholder="Please enter the receiving address"*/}
+          {/*    className={classes.address}*/}
+          {/*    senderAddress={`${address}`}*/}
+          {/*  />*/}
+          {/*</section>*/}
+          {/*<FeesFormikWrapped*/}
+          {/*  amountFormikName="tokenAmount"*/}
+          {/*  className={classes.fees}*/}
+          {/*  fee={bridgeFee}*/}
+          {/*  feeSymbol={homeChain?.nativeTokenSymbol}*/}
+          {/*  symbol={*/}
+          {/*    preflightDetails && tokens[preflightDetails.token]*/}
+          {/*      ? tokens[preflightDetails.token].symbol*/}
+          {/*      : undefined*/}
+          {/*  }*/}
+          {/*/>*/}
+          {/*<section className={classes.transferButtonSection}>*/}
+          {/*  <Button*/}
+          {/*    type="submit"*/}
+          {/*    fullsize*/}
+          {/*    variant="primary"*/}
+          {/*    disabled={!isReady}*/}
+          {/*  >*/}
+          {/*    Start Transfer*/}
+          {/*  </Button>*/}
+          {/*</section>*/}
           {/* <section className={classes.moreInfo}>
             <i
               className="far fa-question-circle fa-2x"
@@ -510,36 +656,36 @@ const TransferPage = () => {
           </section> */}
         </Form>
       </Formik>
-      <AboutDrawer open={aboutOpen} close={() => setAboutOpen(false)} />
-      <ChangeNetworkDrawer
-        open={changeNetworkOpen}
-        close={() => setChangeNetworkOpen(false)}
-      />
-      <NetworkUnsupportedModal
-        open={!homeChain && isReady}
-        network={network}
-        supportedNetworks={chainbridgeConfig.chains.map((bc) => bc.networkId)}
-      />
-      <PreflightModalTransfer
-        open={preflightModalOpen}
-        close={() => setPreflightModalOpen(false)}
-        receiver={preflightDetails?.receiver || ""}
-        sender={address || ""}
-        start={() => {
-          setPreflightModalOpen(false);
-          preflightDetails &&
-            deposit(
-              preflightDetails.tokenAmount,
-              preflightDetails.receiver,
-              preflightDetails.token
-            );
-        }}
-        sourceNetwork={homeChain?.name || ""}
-        targetNetwork={destinationChain?.name || ""}
-        tokenSymbol={preflightDetails?.tokenSymbol || ""}
-        value={preflightDetails?.tokenAmount || 0}
-      />
-      <TransferActiveModal open={!!transactionStatus} close={resetDeposit} />
+      {/*<AboutDrawer open={aboutOpen} close={() => setAboutOpen(false)} />*/}
+      {/*<ChangeNetworkDrawer*/}
+      {/*  open={changeNetworkOpen}*/}
+      {/*  close={() => setChangeNetworkOpen(false)}*/}
+      {/*/>*/}
+      {/*<NetworkUnsupportedModal*/}
+      {/*  open={!homeChain && isReady}*/}
+      {/*  network={network}*/}
+      {/*  supportedNetworks={chainbridgeConfig.chains.map((bc) => bc.networkId)}*/}
+      {/*/>*/}
+      {/*<PreflightModalTransfer*/}
+      {/*  open={preflightModalOpen}*/}
+      {/*  close={() => setPreflightModalOpen(false)}*/}
+      {/*  receiver={preflightDetails?.receiver || ""}*/}
+      {/*  sender={address || ""}*/}
+      {/*  start={() => {*/}
+      {/*    setPreflightModalOpen(false);*/}
+      {/*    preflightDetails &&*/}
+      {/*      deposit(*/}
+      {/*        preflightDetails.tokenAmount,*/}
+      {/*        preflightDetails.receiver,*/}
+      {/*        preflightDetails.token*/}
+      {/*      );*/}
+      {/*  }}*/}
+      {/*  sourceNetwork={homeChain?.name || ""}*/}
+      {/*  targetNetwork={destinationChain?.name || ""}*/}
+      {/*  tokenSymbol={preflightDetails?.tokenSymbol || ""}*/}
+      {/*  value={preflightDetails?.tokenAmount || 0}*/}
+      {/*/>*/}
+      {/*<TransferActiveModal open={!!transactionStatus} close={resetDeposit} />*/}
     </article>
   );
 };

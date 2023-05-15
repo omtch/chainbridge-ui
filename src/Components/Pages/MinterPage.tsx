@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles, createStyles, ITheme } from "@chainsafe/common-theme";
 import AboutDrawer from "../../Modules/AboutDrawer";
 import ChangeNetworkDrawer from "../../Modules/ChangeNetworkDrawer";
@@ -15,7 +15,11 @@ import { useWeb3 } from "@chainsafe/web3-context";
 import { useChainbridge } from "../../Contexts/ChainbridgeContext";
 import { object, string } from "yup";
 import { ReactComponent as ETHIcon } from "../../media/tokens/eth.svg";
-import { chainbridgeConfig, TokenConfig } from "../../chainbridgeConfig";
+import {
+  chainbridgeConfig,
+  chainBridgeOMNToken,
+  TokenConfig,
+} from "../../chainbridgeConfig";
 import PreflightModalWrap from "../../Modules/PreflightModalWrap";
 import WrapActiveModal from "../../Modules/WrapActiveModal";
 import { parseUnits } from "ethers/lib/utils";
@@ -23,12 +27,18 @@ import { forwardTo } from "../../Utils/History";
 import { ROUTE_LINKS } from "../Routes";
 import { BigNumber, utils } from "ethers";
 import SimpleTokenInput from "../Custom/SimpleTokenInput";
+import { AmountInput } from "../Custom/AmountInput";
+import { Exchange } from "./TransferPage";
+import { ReactComponent as IconExchange } from "../../assets/icon_exchange.svg";
+import { Button as TxButton } from "../Custom/Button";
 
 const useStyles = makeStyles(({ constants, palette }: ITheme) =>
   createStyles({
     root: {
-      minHeight: constants.generalUnit * 69,
-      padding: constants.generalUnit * 6,
+      // minHeight: constants.generalUnit * 69,
+      // padding: constants.generalUnit * 6,
+      padding: "32px",
+      width: "100%",
       overflow: "hidden",
       position: "relative",
     },
@@ -187,6 +197,12 @@ const useStyles = makeStyles(({ constants, palette }: ITheme) =>
       },
     },
     submitButtonArea: {},
+    transferButton: {
+      marginTop: "66px",
+    },
+    exchange: {
+      marginBottom: "21px",
+    },
   })
 );
 
@@ -221,6 +237,19 @@ const MainPage = () => {
     tokenAmount: 0,
   });
   const [action, setAction] = useState<"wrap" | "unwrap">("wrap");
+  const [inputValue, setInputValue] = useState("");
+  const currentChainToken = chainbridgeConfig.chains.find(
+    (i) => i.chainId === homeChain?.chainId
+  )?.tokens?.[0];
+  const tokenBalance = tokens?.[currentChainToken?.address as string]?.balance;
+  const [fromToken, setFromToken] = useState<TokenConfig>(chainBridgeOMNToken);
+  const [toToken, setToToken] = useState<TokenConfig>(null as any);
+  const [txLoading, setTxLoading] = useState(false);
+  const isWrapped = fromToken?.symbol === "OMN";
+
+  useEffect(() => {
+    wrapTokenConfig && setToToken(wrapTokenConfig!);
+  }, [wrapTokenConfig]);
 
   const [txDetails, setTxDetails] = useState<
     | {
@@ -241,17 +270,17 @@ const MainPage = () => {
   };
 
   const handleWrapToken = async () => {
-    if (!wrapTokenConfig || !wrapToken || !homeChain) return;
+    if (!wrapToken || !homeChain) return;
 
     try {
-      setTxDetails({
-        tokenInfo: wrapTokenConfig,
-        value: preflightDetails.tokenAmount,
-        txState: "inProgress",
-        action: action,
-      });
+      // setTxDetails({
+      //   tokenInfo: wrapTokenConfig,
+      //   value: preflightDetails.tokenAmount,
+      //   txState: "inProgress",
+      //   action: action,
+      // });
       const tx = await wrapToken({
-        value: parseUnits(`${preflightDetails.tokenAmount}`, DECIMALS),
+        value: parseUnits(`${inputValue}`, DECIMALS),
         gasPrice: BigNumber.from(
           utils.parseUnits(
             (homeChain.defaultGasPrice || gasPrice).toString(),
@@ -261,13 +290,13 @@ const MainPage = () => {
       });
 
       await tx?.wait();
-      setTxDetails({
-        tokenInfo: wrapTokenConfig,
-        value: preflightDetails.tokenAmount,
-        txHash: tx?.hash,
-        txState: "done",
-        action: action,
-      });
+      // setTxDetails({
+      //   tokenInfo: wrapTokenConfig,
+      //   value: preflightDetails.tokenAmount,
+      //   txHash: tx?.hash,
+      //   txState: "done",
+      //   action: action,
+      // });
     } catch (error) {
       console.error(error);
     }
@@ -277,29 +306,26 @@ const MainPage = () => {
     if (!wrapTokenConfig || !unwrapToken || !homeChain) return;
 
     try {
-      setTxDetails({
-        tokenInfo: wrapTokenConfig,
-        value: preflightDetails.tokenAmount,
-        txState: "inProgress",
-        action: action,
+      // setTxDetails({
+      //   tokenInfo: wrapTokenConfig,
+      //   value: preflightDetails.tokenAmount,
+      //   txState: "inProgress",
+      //   action: action,
+      // });
+      const tx = await unwrapToken(parseUnits(`${inputValue}`, DECIMALS), {
+        gasPrice: utils
+          .parseUnits((homeChain.defaultGasPrice || gasPrice).toString(), 9)
+          .toString(),
       });
-      const tx = await unwrapToken(
-        parseUnits(`${preflightDetails.tokenAmount}`, DECIMALS),
-        {
-          gasPrice: utils
-            .parseUnits((homeChain.defaultGasPrice || gasPrice).toString(), 9)
-            .toString(),
-        }
-      );
 
       await tx?.wait();
-      setTxDetails({
-        tokenInfo: wrapTokenConfig,
-        value: preflightDetails.tokenAmount,
-        txHash: tx?.hash,
-        txState: "done",
-        action: action,
-      });
+      // setTxDetails({
+      //   tokenInfo: wrapTokenConfig,
+      //   value: preflightDetails.tokenAmount,
+      //   txHash: tx?.hash,
+      //   txState: "done",
+      //   action: action,
+      // });
     } catch (error) {
       console.error(error);
     }
@@ -335,56 +361,62 @@ const MainPage = () => {
       .required("Please set a value"),
   });
 
+  const handleExchange = () => {
+    setInputValue("");
+    setToToken(fromToken);
+    setFromToken(toToken);
+  };
+
   return (
     <article className={classes.root}>
-      <div className={classes.walletArea}>
-        {!isReady ? (
-          <>
-            <Typography className={classes.blurb} component="p" variant="h5">
-              To convert a token that needs to be wrapped, please connect to the
-              network that the token exists natively for. For example, to
-              convert OMN into wrapped OMN (wOMN), your wallet must be connected
-              to OM network.
-            </Typography>
-            <Button
-              className={classes.connectButton}
-              fullsize
-              onClick={() => {
-                handleConnect();
-              }}
-            >
-              Connect Metamask
-            </Button>
-          </>
-        ) : walletConnecting ? (
-          <section className={classes.connecting}>
-            <Typography component="p" variant="h5">
-              This app requires access to your wallet, <br />
-              please login and authorize access to continue.
-            </Typography>
-          </section>
-        ) : (
-          <section className={classes.connected}>
-            <div>
-              <Typography variant="body1">Home Network</Typography>
-              <Button
-                className={classes.changeButton}
-                variant="outline"
-                onClick={() => setChangeNetworkOpen(true)}
-              >
-                Change
-              </Button>
-            </div>
-            <Typography
-              component="h3"
-              variant="h3"
-              className={classes.networkName}
-            >
-              {homeChain?.name}
-            </Typography>
-          </section>
-        )}
-      </div>
+      {/*<div className={classes.walletArea}>*/}
+      {/*  {!isReady ? (*/}
+      {/*    <>*/}
+      {/*      <Typography className={classes.blurb} component="p" variant="h5">*/}
+      {/*        To convert a token that needs to be wrapped, please connect to the*/}
+      {/*        network that the token exists natively for. For example, to*/}
+      {/*        convert OMN into wrapped OMN (wOMN), your wallet must be connected*/}
+      {/*        to OM network.*/}
+      {/*      </Typography>*/}
+      {/*      <Button*/}
+      {/*        className={classes.connectButton}*/}
+      {/*        fullsize*/}
+      {/*        onClick={() => {*/}
+      {/*          handleConnect();*/}
+      {/*        }}*/}
+      {/*      >*/}
+      {/*        Connect Metamask*/}
+      {/*      </Button>*/}
+      {/*    </>*/}
+      {/*  ) : walletConnecting ? (*/}
+      {/*    <section className={classes.connecting}>*/}
+      {/*      <Typography component="p" variant="h5">*/}
+      {/*        This app requires access to your wallet, <br />*/}
+      {/*        please login and authorize access to continue.*/}
+      {/*      </Typography>*/}
+      {/*    </section>*/}
+      {/*  ) : (*/}
+      {/*    <section className={classes.connected}>*/}
+      {/*      <div>*/}
+      {/*        <Typography variant="body1">Home Network</Typography>*/}
+      {/*        <Button*/}
+      {/*          className={classes.changeButton}*/}
+      {/*          variant="outline"*/}
+      {/*          onClick={() => setChangeNetworkOpen(true)}*/}
+      {/*        >*/}
+      {/*          Change*/}
+      {/*        </Button>*/}
+      {/*      </div>*/}
+      {/*      <Typography*/}
+      {/*        component="h3"*/}
+      {/*        variant="h3"*/}
+      {/*        className={classes.networkName}*/}
+      {/*      >*/}
+      {/*        {homeChain?.name}*/}
+      {/*      </Typography>*/}
+      {/*    </section>*/}
+      {/*  )}*/}
+      {/*</div>*/}
       <Formik
         initialValues={{
           tokenAmount: 0,
@@ -403,125 +435,175 @@ const MainPage = () => {
             disabled: !homeChain,
           })}
         >
-          <section className={classes.currencySection}>
-            <section>
-              <div
-                className={clsx(classes.tokenInputArea, classes.generalInput)}
-              >
-                <SimpleTokenInput
-                  classNames={{
-                    input: clsx(classes.tokenInput, classes.generalInput),
-                    button: classes.maxButton,
-                  }}
-                  name="tokenAmount"
-                  label="I want to convert"
-                  max={
-                    action === "wrap"
-                      ? ethBalance
-                      : tokens[wrapTokenConfig?.address || "0x"]?.balance
-                  }
-                />
-              </div>
-            </section>
-            <section className={classes.tokenIndicator}>
-              <Typography component="p">
-                Balance:{" "}
-                {action === "wrap"
-                  ? ethBalance
-                    ? ethBalance.toFixed(2)
-                    : 0.0
-                  : tokens[wrapTokenConfig?.address || "0x"].balance}
-              </Typography>
-              <SelectInput
-                options={[
-                  {
-                    label: (
-                      <div className={classes.tokenItem}>
-                        <ETHIcon />
-                        <span>OMN</span>
-                      </div>
-                    ),
-                    value: "wrap",
-                  },
-                  {
-                    label: (
-                      <div className={classes.tokenItem}>
-                        <img
-                          src={wrapTokenConfig?.imageUri}
-                          alt={wrapTokenConfig?.symbol}
-                        />
-                        <span>{wrapTokenConfig?.symbol || "wETH"}</span>
-                      </div>
-                    ),
-                    value: "unwrap",
-                  },
-                ]}
-                onChange={(val) => setAction(val)}
-                value={action}
-              />
-            </section>
-          </section>
-          <section className={classes.submitButtonArea}>
-            <Button type="submit" fullsize variant="primary">
-              {action === "wrap" ? "Wrap Token" : "Unwrap token"}
-            </Button>
-          </section>
-          <section>
-            <QuestionCircleSvg
-              onClick={() => setAboutOpen(true)}
-              className={classes.faqButton}
-            />
-          </section>
+          <AmountInput
+            inputValue={inputValue}
+            handleInputChange={(val) => {
+              const sanitizedValue = val.replace(/[^0-9.]/g, "");
+
+              if (sanitizedValue.match(/^\d*\.?\d*$/)) {
+                setInputValue(sanitizedValue);
+              }
+            }}
+            label={"Send:"}
+            token={fromToken}
+            maxAmount={
+              isWrapped
+                ? ethBalance
+                : tokens[wrapTokenConfig?.address || "0x"]?.balance
+            }
+          />
+
+          <Exchange className={classes.exchange}>
+            <IconExchange onClick={handleExchange} />
+          </Exchange>
+          <AmountInput
+            inputValue={inputValue}
+            disabled
+            label={"Received:"}
+            token={toToken}
+          />
+
+          <TxButton
+            className={classes.transferButton}
+            label={isWrapped ? "Wrap Token" : "Unwrap Token"}
+            loading={txLoading}
+            disabled={!address || Number(inputValue) === 0}
+            onClick={async () => {
+              try {
+                setTxLoading(true);
+                setPreflightModalOpen(false);
+                if (isWrapped) {
+                  await handleWrapToken();
+                } else {
+                  await handleUnwrapToken();
+                }
+              } catch (e) {
+                console.log("Tx error: ", e);
+              } finally {
+                setTxLoading(false);
+              }
+            }}
+          />
+
+          {/*<section className={classes.currencySection}>*/}
+          {/*  <section>*/}
+          {/*    <div*/}
+          {/*      className={clsx(classes.tokenInputArea, classes.generalInput)}*/}
+          {/*    >*/}
+          {/*      <SimpleTokenInput*/}
+          {/*        classNames={{*/}
+          {/*          input: clsx(classes.tokenInput, classes.generalInput),*/}
+          {/*          button: classes.maxButton,*/}
+          {/*        }}*/}
+          {/*        name="tokenAmount"*/}
+          {/*        label="I want to convert"*/}
+          {/*        max={*/}
+          {/*          action === "wrap"*/}
+          {/*            ? ethBalance*/}
+          {/*            : tokens[wrapTokenConfig?.address || "0x"]?.balance*/}
+          {/*        }*/}
+          {/*      />*/}
+          {/*    </div>*/}
+          {/*  </section>*/}
+          {/*  <section className={classes.tokenIndicator}>*/}
+          {/*    <Typography component="p">*/}
+          {/*      Balance:{" "}*/}
+          {/*      {action === "wrap"*/}
+          {/*        ? ethBalance*/}
+          {/*          ? ethBalance.toFixed(2)*/}
+          {/*          : 0.0*/}
+          {/*        : tokens[wrapTokenConfig?.address || "0x"].balance}*/}
+          {/*    </Typography>*/}
+          {/*    <SelectInput*/}
+          {/*      options={[*/}
+          {/*        {*/}
+          {/*          label: (*/}
+          {/*            <div className={classes.tokenItem}>*/}
+          {/*              <ETHIcon />*/}
+          {/*              <span>OMN</span>*/}
+          {/*            </div>*/}
+          {/*          ),*/}
+          {/*          value: "wrap",*/}
+          {/*        },*/}
+          {/*        {*/}
+          {/*          label: (*/}
+          {/*            <div className={classes.tokenItem}>*/}
+          {/*              <img*/}
+          {/*                src={wrapTokenConfig?.imageUri}*/}
+          {/*                alt={wrapTokenConfig?.symbol}*/}
+          {/*              />*/}
+          {/*              <span>{wrapTokenConfig?.symbol || "wETH"}</span>*/}
+          {/*            </div>*/}
+          {/*          ),*/}
+          {/*          value: "unwrap",*/}
+          {/*        },*/}
+          {/*      ]}*/}
+          {/*      onChange={(val) => setAction(val)}*/}
+          {/*      value={action}*/}
+          {/*    />*/}
+          {/*  </section>*/}
+          {/*</section>*/}
+          {/*<section className={classes.submitButtonArea}>*/}
+          {/*  <Button type="submit" fullsize variant="primary">*/}
+          {/*    {action === "wrap" ? "Wrap Token" : "Unwrap token"}*/}
+          {/*  </Button>*/}
+          {/*</section>*/}
+          {/*<section>*/}
+          {/*  <QuestionCircleSvg*/}
+          {/*    onClick={() => setAboutOpen(true)}*/}
+          {/*    className={classes.faqButton}*/}
+          {/*  />*/}
+          {/*</section>*/}
         </Form>
       </Formik>
-      <AboutDrawer open={aboutOpen} close={() => setAboutOpen(false)} />
-      <ChangeNetworkDrawer
-        open={changeNetworkOpen}
-        close={() => setChangeNetworkOpen(false)}
-      />
-      <NetworkUnsupportedModal
-        open={!wrapTokenConfig && isReady}
-        network={network}
-        supportedNetworks={chainbridgeConfig.chains
-          .filter((bc) => bc.tokens.find((t) => t.isNativeWrappedToken))
-          .map((bc) => bc.networkId)}
-      />
-      <PreflightModalWrap
-        open={preflightModalOpen}
-        close={() => setPreflightModalOpen(false)}
-        sender={address || ""}
-        start={() => {
-          if (action === "wrap") {
-            handleWrapToken();
-            setPreflightModalOpen(false);
-          } else {
-            handleUnwrapToken();
-            setPreflightModalOpen(false);
-          }
-        }}
-        sourceNetwork={homeChain?.name || ""}
-        tokenSymbol={
-          action === "wrap"
-            ? homeChain?.nativeTokenSymbol || "OMN"
-            : wrapTokenConfig?.symbol || "wOMN"
-        }
-        value={preflightDetails?.tokenAmount || 0}
-        wrappedTitle={
-          action === "wrap"
-            ? `${wrapTokenConfig?.name} (${wrapTokenConfig?.symbol})`
-            : homeChain?.nativeTokenSymbol || "OMN"
-        }
-        action={action}
-      />
-      {txDetails && (
-        <WrapActiveModal
-          {...txDetails}
-          close={() => {
-            setTxDetails(undefined);
-            forwardTo(ROUTE_LINKS.Transfer);
-          }}
-        />
-      )}
+      {/*<AboutDrawer open={aboutOpen} close={() => setAboutOpen(false)} />*/}
+      {/*<ChangeNetworkDrawer*/}
+      {/*  open={changeNetworkOpen}*/}
+      {/*  close={() => setChangeNetworkOpen(false)}*/}
+      {/*/>*/}
+      {/*<NetworkUnsupportedModal*/}
+      {/*  open={!wrapTokenConfig && isReady}*/}
+      {/*  network={network}*/}
+      {/*  supportedNetworks={chainbridgeConfig.chains*/}
+      {/*    .filter((bc) => bc.tokens.find((t) => t.isNativeWrappedToken))*/}
+      {/*    .map((bc) => bc.networkId)}*/}
+      {/*/>*/}
+      {/*<PreflightModalWrap*/}
+      {/*  open={preflightModalOpen}*/}
+      {/*  close={() => setPreflightModalOpen(false)}*/}
+      {/*  sender={address || ""}*/}
+      {/*  start={() => {*/}
+      {/*    if (action === "wrap") {*/}
+      {/*      handleWrapToken();*/}
+      {/*      setPreflightModalOpen(false);*/}
+      {/*    } else {*/}
+      {/*      handleUnwrapToken();*/}
+      {/*      setPreflightModalOpen(false);*/}
+      {/*    }*/}
+      {/*  }}*/}
+      {/*  sourceNetwork={homeChain?.name || ""}*/}
+      {/*  tokenSymbol={*/}
+      {/*    action === "wrap"*/}
+      {/*      ? homeChain?.nativeTokenSymbol || "OMN"*/}
+      {/*      : wrapTokenConfig?.symbol || "wOMN"*/}
+      {/*  }*/}
+      {/*  value={preflightDetails?.tokenAmount || 0}*/}
+      {/*  wrappedTitle={*/}
+      {/*    action === "wrap"*/}
+      {/*      ? `${wrapTokenConfig?.name} (${wrapTokenConfig?.symbol})`*/}
+      {/*      : homeChain?.nativeTokenSymbol || "OMN"*/}
+      {/*  }*/}
+      {/*  action={action}*/}
+      {/*/>*/}
+      {/*{txDetails && (*/}
+      {/*  <WrapActiveModal*/}
+      {/*    {...txDetails}*/}
+      {/*    close={() => {*/}
+      {/*      setTxDetails(undefined);*/}
+      {/*      forwardTo(ROUTE_LINKS.Transfer);*/}
+      {/*    }}*/}
+      {/*  />*/}
+      {/*)}*/}
     </article>
   );
 };

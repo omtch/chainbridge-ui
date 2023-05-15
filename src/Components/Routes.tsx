@@ -13,7 +13,7 @@ const FilesRoutes = () => {
     <Switch>
       <Route exact path={ROUTE_LINKS.Transfer} component={TransferPage} />
       <Route exact path={ROUTE_LINKS.Mint} component={MinterPage} />
-      <Route exact path="/">
+      <Route path="/">
         <Redirect to={ROUTE_LINKS.Transfer} />
       </Route>
     </Switch>

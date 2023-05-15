@@ -25,6 +25,10 @@ const useStyles = makeStyles(
         justifyContent: "center",
         zIndex: 2,
         position: "relative",
+        [breakpoints.down("sm")]: {
+          justifyContent: "flex-start",
+          paddingTop: "60px",
+        },
       },
       inner: {
         // paddingTop: (constants.navItemHeight as number) * 2,
@@ -45,18 +49,21 @@ const useStyles = makeStyles(
       },
       content: {
         margin: `0 auto`,
-        maxWidth: 660,
+        maxWidth: 560,
         borderRadius: 4,
+        marginBottom: "32px",
       },
       pageArea: {
         overflow: "hidden",
-        border: "8px solid",
-        borderImageSlice: 1,
-        borderImageSource: `linear-gradient(to left, ${MOONBEAM_PINK}, ${MOONBEAM_PURPLE}, ${MOONBEAM_CYAN})`,
+        // border: "8px solid",
+        // borderImageSlice: 1,
+        // borderImageSource: `linear-gradient(to left, ${MOONBEAM_PINK}, ${MOONBEAM_PURPLE}, ${MOONBEAM_CYAN})`,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        boxShadow: `0 0 8px ${MOONBEAM_PURPLE}`,
+        background: "rgba(255, 255, 255, 0.42)",
+        borderRadius: "16px",
+        // boxShadow: `0 0 8px ${MOONBEAM_PURPLE}`,
       },
       navTabs: {
         display: "flex",

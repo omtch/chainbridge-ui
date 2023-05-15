@@ -1,5 +1,8 @@
 import ETHIcon from "./media/tokens/eth.svg";
 import WETHIcon from "./media/tokens/weth.svg";
+import IconBSC from "./assets/icon_bsc.svg";
+import IconOmega from "./assets/icon_omega_swap.svg";
+import IconOmegaCoin from "./assets/icon_omega_explorer.svg";
 
 export type TokenConfig = {
   address: string;
@@ -23,6 +26,7 @@ export type BridgeConfig = {
   //This should be the full path to display a tx hash, without the trailing slash, ie. https://etherscan.io/tx
   blockExplorer?: string;
   defaultGasPrice?: number;
+  chainIcon: string;
 };
 
 export type ChainbridgeConfig = {
@@ -47,12 +51,13 @@ export const chainbridgeConfig: ChainbridgeConfig = {
           address: "0x01bDCf41Db44c1F92AcBbd016F56c1593aAb1258",
           name: "Wrapped OMN",
           symbol: "wOMN",
-          imageUri: WETHIcon,
+          imageUri: IconOmegaCoin,
           resourceId:
             "0x00000000000000000000000001bDCf41Db44c1F92AcBbd016F56c1593aAb1258",
           isNativeWrappedToken: true,
         },
       ],
+      chainIcon: IconOmegaCoin,
     },
     {
       chainId: 1,
@@ -69,11 +74,12 @@ export const chainbridgeConfig: ChainbridgeConfig = {
           address: "0x23A9FD05ef0c5fb9dDE964C4d4191A169Fd221f8",
           name: "Wrapped OMN",
           symbol: "wOMN",
-          imageUri: WETHIcon,
+          imageUri: IconOmegaCoin,
           resourceId:
             "0x000000000000000000000023A9FD05ef0c5fb9dDE964C4d4191A169Fd221f802",
         },
       ],
+      chainIcon: IconBSC,
     },
   ],
 
@@ -116,4 +122,12 @@ export const chainbridgeConfig: ChainbridgeConfig = {
   //   ],
   // },
   // ]
+};
+
+export const chainBridgeOMNToken = {
+  address: "0x0000000000000000000000000000000000000001",
+  name: "OMN",
+  symbol: "OMN",
+  imageUri: IconOmegaCoin,
+  resourceId: "",
 };

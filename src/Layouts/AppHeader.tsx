@@ -1,5 +1,5 @@
 import { createStyles, ITheme, makeStyles } from "@chainsafe/common-theme";
-import React from "react";
+import React, { useState } from "react";
 import clsx from "clsx";
 import { Typography, NavLink, useLocation } from "@chainsafe/common-components";
 import { shortenAddress } from "../Utils/Helpers";
@@ -164,7 +164,34 @@ const HeaderWrapper = styled.div`
     }
     .menu-mobile {
       display: block;
-      width: 32px;
+      position: relative;
+      svg {
+        width: 32px;
+      }
+    }
+  }
+`;
+
+const Menu = styled.div`
+  padding: 8px 0;
+  background: #ffffff;
+  position: absolute;
+  top: 110%;
+  right: 0;
+  width: 100px;
+  border-radius: 8px;
+  border: 1px solid rgb(81, 85, 166);
+  .menu-item {
+    color: #5d6785;
+    a {
+      padding: 6px;
+      text-decoration: none;
+      display: block;
+      width: 100%;
+      color: #5d6785;
+    }
+    &:hover {
+      background: #eeeeee;
     }
   }
 `;
@@ -174,7 +201,7 @@ const useStyles = makeStyles(
     return createStyles({
       root: {
         display: "flex",
-        position: "fixed",
+        position: "absolute",
         justifyContent: "space-between",
         padding: `${constants.generalUnit * 2}px ${
           constants.generalUnit * 4
@@ -246,6 +273,7 @@ const AppHeader: React.FC<IAppHeader> = () => {
   const classes = useStyles();
   const { isReady, address, wallet, onboard, checkIsReady } = useWeb3();
   const { homeChain } = useChainbridge();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleConnect = async () => {
     !wallet && (await onboard?.walletSelect());
@@ -273,10 +301,12 @@ const AppHeader: React.FC<IAppHeader> = () => {
       <section className={classes.state}>
         {isReady && address ? (
           <>
-            <Network>
-              <IconExplorer />
-              <span>{homeChain?.name}</span>
-            </Network>
+            {homeChain?.name && (
+              <Network>
+                <IconExplorer />
+                <span>{homeChain?.name}</span>
+              </Network>
+            )}
             <Address>
               <IconMetamask />
               <span>{shortenAddress(address)}</span>
@@ -303,8 +333,22 @@ const AppHeader: React.FC<IAppHeader> = () => {
         {/*    </Typography>*/}
         {/*  </>*/}
         {/*)}*/}
-        <IconEllipsis className={"menu-pc"} style={{ cursor: "pointer" }} />
-        <IconMenu className={"menu-mobile"} />
+        {/*<IconEllipsis className={"menu-pc"} style={{ cursor: "pointer" }} />*/}
+        <div className={"menu-mobile"} onClick={() => setMenuOpen(!menuOpen)}>
+          <IconMenu />
+          {menuOpen && (
+            <Menu>
+              {navList.map((nav) => (
+                <div className={"menu-item"} key={nav.name}>
+                  <a href={nav.link} target={"_blank"}>
+                    {/*<div className="icon-wrapper">{nav.icon}</div>*/}
+                    {nav.name}
+                  </a>
+                </div>
+              ))}
+            </Menu>
+          )}
+        </div>
       </section>
     </HeaderWrapper>
   );

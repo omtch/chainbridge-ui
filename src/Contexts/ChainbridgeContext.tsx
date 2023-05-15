@@ -37,7 +37,11 @@ const resetAllowanceLogicFor = [
 type ChainbridgeContext = {
   homeChain?: BridgeConfig;
   destinationChain?: BridgeConfig;
-  destinationChains: Array<{ chainId: number; name: string }>;
+  destinationChains: Array<{
+    chainId: number;
+    name: string;
+    chainIcon: string;
+  }>;
   setDestinationChain(chainId: number): void;
   deposit(
     amount: number,
@@ -450,6 +454,7 @@ const ChainbridgeProvider = ({ children }: IChainbridgeContextProps) => {
         destinationChains: destinationChains.map((c) => ({
           chainId: c.chainId,
           name: c.name,
+          chainIcon: c.chainIcon,
         })),
         setDestinationChain: handleSetDestination,
         deposit,
