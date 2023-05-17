@@ -65,3 +65,6 @@ body {
   transform: translate(0, -50%);
   z-index: 1;
 }
+.bn-onboard-modal {
+  display: none !important;
+}
