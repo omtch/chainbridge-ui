@@ -282,6 +282,7 @@ const AppHeader: React.FC<IAppHeader> = () => {
   } = useWeb3();
   const { homeChain } = useChainbridge();
   const [menuOpen, setMenuOpen] = useState(false);
+  console.log("test-------");
 
   const handleConnect = async () => {
     !wallet && (await onboard?.walletSelect());
