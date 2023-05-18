@@ -66,5 +66,6 @@ body {
   z-index: 1;
 }
 .bn-onboard-modal {
-  display: none !important;
+  /*display: none !important;*/
+  z-index: 99999;
 }

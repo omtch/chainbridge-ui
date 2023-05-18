@@ -106,11 +106,11 @@ const AppFooter: React.FC = () => {
         ))}
       </div>
       <div className={"link-wrapper"}>
-        {links.map((i) => (
+        {links.map((i, index) => (
           <div
             className={"link-item"}
             onClick={() => (i.link ? window.open(i.link) : {})}
-            key={i.link}
+            key={index}
           >
             {i.label}
           </div>
